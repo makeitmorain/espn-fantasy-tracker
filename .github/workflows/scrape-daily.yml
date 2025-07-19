@@ -1,0 +1,45 @@
+name: Daily ESPN Fantasy Scraper
+
+on:
+schedule:
+# Run every day at 8 AM Eastern (12 PM UTC)
+- cron: ‘0 12 * * *’
+
+# Allow manual triggering
+
+workflow_dispatch:
+
+jobs:
+scrape:
+runs-on: ubuntu-latest
+
+```
+steps:
+- name: Checkout code
+  uses: actions/checkout@v3
+  
+- name: Setup Node.js
+  uses: actions/setup-node@v3
+  with:
+    node-version: '18'
+    
+- name: Install Playwright
+  run: |
+    npm install playwright
+    npx playwright install chromium
+    
+- name: Run scraper
+  env:
+    ESPN_USERNAME: ${{ secrets.ESPN_USERNAME }}
+    ESPN_PASSWORD: ${{ secrets.ESPN_PASSWORD }}
+    LEAGUE_ID: ${{ secrets.LEAGUE_ID }}
+  run: node scrape-standings.js
+  
+- name: Commit and push data
+  run: |
+    git config --local user.email "action@github.com"
+    git config --local user.name "GitHub Action"
+    git add data/
+    git diff --staged --quiet || git commit -m "Update standings data $(date)"
+    git push
+```
